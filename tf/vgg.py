@@ -76,13 +76,11 @@ class vgg():
             fc = tf.nn.bias_add(tf.matmul(x, W), b)
             if relu:
                 a = tf.nn.relu(fc)
-            else:
-                a = tf.nn.sigmoid(fc)
         return a
 # ..reyaldetcennoCylluF>
         
 # <MaxPool..
-    def maxpool(self, x, name):
+    def max_pool(self, x, name):
         """
         <Parameters..
             x :: input tensor
@@ -109,39 +107,48 @@ class vgg():
 
 # <Build_VGG..
     def build_vgg(self):
+        N, H, W, C = self.X.shape
         # <Block1..
-        conv1_1 = self.conv(self.X, 64, "conv1_1")
-        conv1_2 = self.conv(conv1_1, 64, "conv1_2")
-        max_pool1 = self.max_pool(conv1_2, "pool1")
+        self.conv1_1 = self.conv(self.X, 64, "conv1_1")
+        self.conv1_2 = self.conv(self.conv1_1, 64, "conv1_2")
+        self.max_pool1 = self.max_pool(self.conv1_2, "pool1")
         # ..1kcolB>
         # <Block2..
-        conv2_1 = self.conv(max_pool1, 128, "conv2_1")
-        conv2_2 = self.conv(conv2_1, 128, "conv2_2")
-        max_pool2 = self.max_pool(conv2_2, "pool2")
+        self.conv2_1 = self.conv(self.max_pool1, 128, "conv2_1")
+        self.conv2_2 = self.conv(self.conv2_1, 128, "conv2_2")
+        self.max_pool2 = self.max_pool(self.conv2_2, "pool2")
         # ..2kcolB>
         # <Block3..
-        conv3_1 = self.conv(max_pool2, 256, "conv3_1")
-        conv3_2 = self.conv(conv3_1, 256, "conv3_2")
-        conv3_3 = self.conv(conv3_2, 256, "conv3_3")
-        max_pool3 = self.max_pool(conv3_3, "pool3")
+        self.conv3_1 = self.conv(self.max_pool2, 256, "conv3_1")
+        self.conv3_2 = self.conv(self.conv3_1, 256, "conv3_2")
+        self.conv3_3 = self.conv(self.conv3_2, 256, "conv3_3")
+        self.max_pool3 = self.max_pool(self.conv3_3, "pool3")
         # ..3kcolB>
         # <Block4..
-        conv4_1 = self.conv(max_pool3, 512, "conv4_1")
-        conv4_2 = self.conv(conv4_1, 512, "conv4_2")
-        conv4_3 = self.conv(conv4_2, 512, "conv4_3")
-        max_pool4 = self.max_pool(conv4_3, "pool4")
+        self.conv4_1 = self.conv(self.max_pool3, 512, "conv4_1")
+        self.conv4_2 = self.conv(self.conv4_1, 512, "conv4_2")
+        self.conv4_3 = self.conv(self.conv4_2, 512, "conv4_3")
+        self.max_pool4 = self.max_pool(self.conv4_3, "pool4")
         # ..4kcolB>
         # <Block5..
-        conv5_1 = self.conv(max_pool4, 512, "conv5_1")
-        conv5_2 = self.conv(conv5_1, 512, "conv5_2")
-        conv5_3 = self.conv(conv5_2, 512, "conv5_3")
-        max_pool5 = self.max_pool(conv5_3, "pool5")
+        self.conv5_1 = self.conv(self.max_pool4, 512, "conv5_1")
+        self.conv5_2 = self.conv(self.conv5_1, 512, "conv5_2")
+        self.conv5_3 = self.conv(self.conv5_2, 512, "conv5_3")
+        self.max_pool5 = self.max_pool(self.conv5_3, "pool5")
         # ..5kcolB>
-        flattened = tf.reshape(max_pool5, [self.X.shape[0], -1])
+        self.flattened = tf.reshape(self.max_pool5, [N, -1])
+        self.size = self.flattened.shape[-1]
         # <Block6..
-        
+        self.fc6 = self.fc(self.flattened, size, 4096, name="fc6")
+        self.dp6 = self.dropout(self.fc6, name="dropout6")
         # ..6kcolB>
-        
+        # <Block7..
+        self.fc7 = self.fc(dp6, 4096, 4096, name="fc7")
+        self.dp7 = self.dropout(self.fc7, name="dropout7")
+        # ..7kcolB>
+        # <Block8..
+        self.fc8 = self.fc(self.dp7, 4096, 1000, name="fc8", relu=False)
+        # ..8kcolB>
 # ..GGVdliuB>
         
 """ 
