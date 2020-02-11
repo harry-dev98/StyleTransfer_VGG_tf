@@ -45,11 +45,11 @@ class vgg():
         ..sretemaraP>
         """
 
-        incoming_channels = int(x.get_shape()[-1])
+        input_channels = int(x.get_shape()[-1])
         with tf.variable_scope(name) as scope:
             # Weights and Bias variables
-            W = tf.get_variable('wts', shape = [filter_height, filter_width, input_channels,
-                            num_filters],initializer = tf.random_normal_initializer(mean = 0.0, stddev = 0.01))
+            W = tf.get_variable('wts', shape = [h_filt, w_filt, input_channels,
+                            num_filt],initializer = tf.random_normal_initializer(mean = 0.0, stddev = 0.01))
             b = tf.get_variable('biases', shape = [num_filters], initializer = tf.constant_initializer(0.0))
             #conv layer
             conv = tf.nn.bias_add(tf.rnn.conv2d(x, W, strides=[1,stride,stride,1], paddings=pad, name=name), b)
