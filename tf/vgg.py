@@ -6,15 +6,12 @@ import numpy as np
 
 # ..stropmI>
 
+# <VGG..
 """
-<VGG..
     Implementation of VGG16
-..GGV>
 """
-class vgg():
-    def _init__(self, x, keep_prob, num_classes):
-        
-        
+class VGG():
+    def __init__(self, x, keep_prob, num_classes, train=True):
         """
         <Parameters..
             x :: input tensor placeholder
@@ -22,18 +19,14 @@ class vgg():
             num_classes :: number of differnt classifications
         ..sretemaraP>
         """
-        
-        
         self.X = x
         self.keep_prob = keep_prob
         self.num_classes = num_classes
         
-        self.build_vgg()
-    
+        self.build_vgg(train=train)    
 
 #<Conv-Layer..
-    def conv(self, x, num_filt, name, h_filt=3, w_filt=3, stride=1, pad="same"):    
-        
+    def conv(self, x, num_filt, name, h_filt=3, w_filt=3, stride=1, pad="SAME"):    
         """
         <Parameters..
             x :: input tensor placeholder
@@ -44,15 +37,13 @@ class vgg():
             pad :: pad 
         ..sretemaraP>
         """
-
         input_channels = int(x.get_shape()[-1])
         with tf.variable_scope(name) as scope:
             # Weights and Bias variables
-            W = tf.get_variable('wts', shape = [h_filt, w_filt, input_channels,
-                            num_filt],initializer = tf.random_normal_initializer(mean = 0.0, stddev = 0.01))
+            W = tf.get_variable('wts', shape = [h_filt, w_filt, input_channels, num_filt],initializer = tf.random_normal_initializer(mean = 0.0, stddev = 0.01))
             b = tf.get_variable('biases', shape = [num_filt], initializer = tf.constant_initializer(0.0))
             #conv layer
-            conv = tf.nn.bias_add(tf.nn.conv2d(x, W, strides=[1,stride,stride,1], paddings=pad, name=name), b)
+            conv = tf.nn.bias_add(tf.nn.conv2d(x, W, strides=[1,stride,stride,1], padding=pad, name=name), b)
             a_relu = tf.nn.relu(conv)
         return a_relu
 #..reyaL-Conv>
@@ -76,6 +67,8 @@ class vgg():
             fc = tf.nn.bias_add(tf.matmul(x, W), b)
             if relu:
                 a = tf.nn.relu(fc)
+            else:
+                a = fc
         return a
 # ..reyaldetcennoCylluF>
         
@@ -90,7 +83,7 @@ class vgg():
             need any..
         ..sretemaraP>
         """
-        return tf.nn.max_pool(x, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "valid", name = name)
+        return tf.nn.max_pool(x, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "VALID", name = name)
 
 # ..looPxaM>
         
@@ -106,7 +99,7 @@ class vgg():
 # ..tuoporD>
 
 # <Build_VGG..
-    def build_vgg(self):
+    def build_vgg(self, train=True):
         N, H, W, C = self.X.shape
         # <Block1..
         self.conv1_1 = self.conv(self.X, 64, "conv1_1")
@@ -136,21 +129,39 @@ class vgg():
         self.conv5_3 = self.conv(self.conv5_2, 512, "conv5_3")
         self.max_pool5 = self.max_pool(self.conv5_3, "pool5")
         # ..5kcolB>
-        self.flattened = tf.reshape(self.max_pool5, [N, -1])
+        N, H_5, W_5, _ = self.max_pool5.shape 
+        self.flattened = tf.reshape(self.max_pool5, [-1, H_5*W_5*512])
         size = self.flattened.shape[-1]
         # <Block6..
         self.fc6 = self.fc(self.flattened, size, 4096, name="fc6")
-        self.dp6 = self.dropout(self.fc6, name="dropout6")
+        if train:
+            self.dp6 = self.dropout(self.fc6, name="dropout6")
         # ..6kcolB>
         # <Block7..
         self.fc7 = self.fc(self.dp6, 4096, 4096, name="fc7")
-        self.dp7 = self.dropout(self.fc7, name="dropout7")
+        if train:
+            self.dp7 = self.dropout(self.fc7, name="dropout7")
         # ..7kcolB>
         # <Block8..
-        self.fc8 = self.fc(self.dp7, 4096, 1000, name="fc8", relu=False)
+        self.fc8 = self.fc(self.dp7, 4096, self.num_classes, name="fc8", relu=False)
         # ..8kcolB>
 # ..GGVdliuB>
-        
+# <Loss..
+    def loss(self, y):
+        return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.fc8, labels=y))
+# ..ssoL>
+# <Train Optimizer..
+    def trainer(self, loss):
+        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+        return optimizer.minimize(loss)
+# ..rezimitpO niarT>
+# <Get Predictions, Accuracy..
+    def prob(self, y):
+        prob = tf.nn.softmax(self.fc8)
+        acc, acc_op = tf.metrics.accuracy(predictions=tf.argmax(prob, 1), labels=y)
+# ..ycaruccA ,snoitciderP teG>
+# ..GGV>
+
 """ 
 <VGG16_load..
     This is already existing model loaded from
