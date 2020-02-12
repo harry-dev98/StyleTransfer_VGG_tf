@@ -11,7 +11,7 @@ import numpy as np
     Implementation of VGG16
 """
 class VGG():
-    def __init__(self, x, keep_prob, num_classes, train=True):
+    def __init__(self, x, keep_prob, num_classes):
         """
         <Parameters..
             x :: input tensor placeholder
@@ -23,7 +23,7 @@ class VGG():
         self.keep_prob = keep_prob
         self.num_classes = num_classes
         
-        self.build_vgg(train=train)    
+        self.build_vgg()    
 
 #<Conv-Layer..
     def conv(self, x, num_filt, name, h_filt=3, w_filt=3, stride=1, pad="SAME"):    
@@ -99,7 +99,7 @@ class VGG():
 # ..tuoporD>
 
 # <Build_VGG..
-    def build_vgg(self, train=True):
+    def build_vgg(self):
         N, H, W, C = self.X.shape
         # <Block1..
         self.conv1_1 = self.conv(self.X, 64, "conv1_1")
@@ -134,13 +134,11 @@ class VGG():
         size = self.flattened.shape[-1]
         # <Block6..
         self.fc6 = self.fc(self.flattened, size, 4096, name="fc6")
-        if train:
-            self.dp6 = self.dropout(self.fc6, name="dropout6")
+        self.dp6 = self.dropout(self.fc6, name="dropout6")
         # ..6kcolB>
         # <Block7..
         self.fc7 = self.fc(self.dp6, 4096, 4096, name="fc7")
-        if train:
-            self.dp7 = self.dropout(self.fc7, name="dropout7")
+        self.dp7 = self.dropout(self.fc7, name="dropout7")
         # ..7kcolB>
         # <Block8..
         self.fc8 = self.fc(self.dp7, 4096, self.num_classes, name="fc8", relu=False)
@@ -151,7 +149,7 @@ class VGG():
         return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.fc8, labels=y))
 # ..ssoL>
 # <Train Optimizer..
-    def trainer(self, loss):
+    def trainer(self, loss, lr):
         optimizer = tf.train.AdamOptimizer(learning_rate=lr)
         return optimizer.minimize(loss)
 # ..rezimitpO niarT>
